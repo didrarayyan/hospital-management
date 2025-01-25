@@ -7,7 +7,7 @@ from .forms import PatientRegistrationForm, AppointmentForm, DoctorForm
 
 def register_patient(request):
     if request.method == 'POST':
-        form = PatientRegistrationForm(request.POST)
+        form = PatientRegistrationForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()
             messages.success(request, 'Patient registered successfully!')
@@ -32,6 +32,26 @@ class PatientListView(ListView):
     template_name = 'registration/patient_list.html'
     context_object_name = 'patients'
     ordering = ['-registration_date']
+
+class PatientDetailView(DetailView):
+    model = Patient
+    template_name = 'registration/patient_detail.html'
+    context_object_name = 'patient'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['appointments'] = self.object.appointments.all().order_by('-appointment_date')
+        return context
+
+class PatientUpdateView(UpdateView):
+    model = Patient
+    form_class = PatientRegistrationForm
+    template_name = 'registration/register_patient.html'
+    success_url = reverse_lazy('patient_list')
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Patient information updated successfully!')
+        return super().form_valid(form)
 
 class AppointmentListView(ListView):
     model = Appointment

@@ -1,25 +1,58 @@
 {% extends 'registration/base.html' %}
 
 {% block content %}
-<h2>Patients List</h2>
-<table class="table mt-3">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Phone</th>
-            <th>Email</th>
-            <th>Registration Date</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for patient in patients %}
-        <tr>
-            <td>{{ patient.first_name }} {{ patient.last_name }}</td>
-            <td>{{ patient.phone_number }}</td>
-            <td>{{ patient.email }}</td>
-            <td>{{ patient.registration_date }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Patients List</h2>
+        <a href="{% url 'register_patient' %}" class="btn btn-primary">Register New Patient</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Photo</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Registration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for patient in patients %}
+                        <tr>
+                            <td>
+                                {% if patient.photo %}
+                                    <img src="{{ patient.photo.url }}" alt="Patient photo" class="rounded-circle" style="width: 50px; height: 50px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td>{{ patient.first_name }} {{ patient.last_name }}</td>
+                            <td>{{ patient.phone_number }}</td>
+                            <td>{{ patient.email }}</td>
+                            <td>{{ patient.registration_date|date:"F d, Y" }}</td>
+                            <td>
+                                <div class="btn-group">
+                                    <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

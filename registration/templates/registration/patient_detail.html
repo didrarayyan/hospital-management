@@ -1,0 +1,112 @@
+{% extends 'registration/base.html' %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    {% if patient.photo %}
+                        <img src="{{ patient.photo.url }}" alt="Patient photo" class="rounded-circle img-fluid mb-3" style="max-width: 200px;">
+                    {% else %}
+                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center mx-auto mb-3" style="width: 200px; height: 200px;">
+                            <i class="fas fa-user fa-5x"></i>
+                        </div>
+                    {% endif %}
+                    <h3>{{ patient.first_name }} {{ patient.last_name }}</h3>
+                    <p class="text-muted">Patient ID: {{ patient.id }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0">Patient Information</h4>
+                    <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Date of Birth</h6>
+                            <p>{{ patient.date_of_birth }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Gender</h6>
+                            <p>{{ patient.get_gender_display }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6>Phone Number</h6>
+                            <p>{{ patient.phone_number }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Email</h6>
+                            <p>{{ patient.email|default:"Not provided" }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Address</h6>
+                        <p>{{ patient.address }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Medical History</h6>
+                        <p>{{ patient.medical_history|default:"No medical history recorded"|linebreaks }}</p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6>Registration Date</h6>
+                        <p>{{ patient.registration_date|date:"F d, Y H:i" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h4 class="mb-0">Appointment History</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Doctor</th>
+                                    <th>Reason</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for appointment in patient.appointments.all %}
+                                <tr>
+                                    <td>{{ appointment.appointment_date|date:"F d, Y H:i" }}</td>
+                                    <td>Dr. {{ appointment.doctor.first_name }} {{ appointment.doctor.last_name }}</td>
+                                    <td>{{ appointment.reason }}</td>
+                                    <td>
+                                        <span class="badge {% if appointment.status == 'SCHEDULED' %}bg-primary
+                                                   {% elif appointment.status == 'COMPLETED' %}bg-success
+                                                   {% else %}bg-danger{% endif %}">
+                                            {{ appointment.status }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="4" class="text-center">No appointments found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

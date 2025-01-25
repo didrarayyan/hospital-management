@@ -1,25 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
 
-# class Doctor(models.Model):
-#     SPECIALIZATION_CHOICES = [
-#         ('CARDIOLOGY', 'Cardiology'),
-#         ('DERMATOLOGY', 'Dermatology'),
-#         ('NEUROLOGY', 'Neurology'),
-#         ('PEDIATRICS', 'Pediatrics'),
-#         ('ORTHOPEDICS', 'Orthopedics'),
-#     ]
-    
-#     first_name = models.CharField(max_length=100)
-#     last_name = models.CharField(max_length=100)
-#     specialization = models.CharField(max_length=20, choices=SPECIALIZATION_CHOICES)
-#     phone_number = models.CharField(max_length=15)
-#     email = models.EmailField()
-#     schedule = models.TextField()
-    
-#     def __str__(self):
-#         return f"Dr. {self.first_name} {self.last_name} - {self.specialization}"
-
 class Doctor(models.Model):
     SPECIALIZATION_CHOICES = [
         ('CARDIOLOGY', 'Cardiology'),
@@ -60,6 +41,7 @@ class Patient(models.Model):
     address = models.TextField(verbose_name="Address")
     registration_date = models.DateTimeField(auto_now_add=True)
     medical_history = models.TextField(blank=True, verbose_name="Medical History")
+    photo = models.ImageField(upload_to='patient_photos/', blank=True, null=True, verbose_name="Patient Photo")
     
     class Meta:
         ordering = ['-registration_date']
