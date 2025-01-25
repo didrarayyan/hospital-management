@@ -4,37 +4,71 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Book New Appointment</h3>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-calendar-plus me-2"></i>Book New Appointment
+                    </h3>
                 </div>
                 <div class="card-body">
                     <form method="post" class="row g-3">
                         {% csrf_token %}
                         
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                         <div class="col-md-6">
-                            <label for="{{ form.patient.id_for_label }}" class="form-label">Patient</label>
+                            <label for="{{ form.patient.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>Patient
+                            </label>
                             {{ form.patient }}
+                            {% if form.patient.errors %}
+                                <div class="text-danger small">{{ form.patient.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.doctor.id_for_label }}" class="form-label">Doctor</label>
+                            <label for="{{ form.doctor.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-md me-1"></i>Doctor
+                            </label>
                             {{ form.doctor }}
+                            {% if form.doctor.errors %}
+                                <div class="text-danger small">{{ form.doctor.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-12">
-                            <label for="{{ form.appointment_date.id_for_label }}" class="form-label">Appointment Date & Time</label>
+                            <label for="{{ form.appointment_date.id_for_label }}" class="form-label">
+                                <i class="fas fa-clock me-1"></i>Appointment Date & Time
+                            </label>
                             {{ form.appointment_date }}
+                            {% if form.appointment_date.errors %}
+                                <div class="text-danger small">{{ form.appointment_date.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-12">
-                            <label for="{{ form.reason.id_for_label }}" class="form-label">Reason for Visit</label>
+                            <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                <i class="fas fa-comment-medical me-1"></i>Reason for Visit
+                            </label>
                             {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="text-danger small">{{ form.reason.errors }}</div>
+                            {% endif %}
                         </div>
                         
-                        <div class="col-12">
-                            <button type="submit" class="btn btn-primary">Book Appointment</button>
-                            <a href="{% url 'appointment_list' %}" class="btn btn-secondary">Cancel</a>
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Book Appointment
+                            </button>
+                            <a href="{% url 'appointment_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -42,4 +76,17 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize any date/time pickers if needed
+        const dateInput = document.querySelector('input[type="datetime-local"]');
+        if (dateInput) {
+            dateInput.min = new Date().toISOString().slice(0, 16);
+        }
+    });
+</script>
+{% endblock %}
+
 {% endblock %}

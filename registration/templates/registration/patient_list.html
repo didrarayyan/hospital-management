@@ -4,10 +4,29 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Patients List</h2>
-        <a href="{% url 'register_patient' %}" class="btn btn-primary">Register New Patient</a>
+        <a href="{% url 'register_patient' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus me-1"></i> Register New Patient
+        </a>
     </div>
 
-    <div class="card">
+    <div class="card shadow-sm">
+        <div class="card-header bg-light">
+            <div class="row text-center">
+                <div class="col-md-4">
+                    <h5 class="mb-0">Total Patients</h5>
+                    <span class="h3 text-primary">{{ total_patients }}</span>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-0">New This Month</h5>
+                    <span class="h3 text-success">{{ new_patients_month|default:0 }}</span>
+                </div>
+                <div class="col-md-4">
+                    <h5 class="mb-0">Active Appointments</h5>
+                    <span class="h3 text-warning">{{ active_appointments|default:0 }}</span>
+                </div>
+            </div>
+        </div>
+
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
@@ -40,13 +59,17 @@
                             <td>
                                 <div class="btn-group">
                                     <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye"></i> View
+                                        <i class="fas fa-eye me-1"></i> View Details
                                     </a>
                                     <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit"></i> Edit
+                                        <i class="fas fa-edit me-1"></i> Edit Patient
                                     </a>
                                 </div>
                             </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No patients found</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -54,5 +77,39 @@
             </div>
         </div>
     </div>
+
+    {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                {% else %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
 </div>
 {% endblock %}

@@ -1,0 +1,31 @@
+body {
+    font-family: 'Inter', sans-serif;
+    color: #2c3e50;
+    line-height: 1.6;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 600;
+    color: #2c3e50;
+    margin-bottom: 1rem;
+  }
+  
+  .card-title {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    font-weight: 600;
+  }
+  
+  .text-muted {
+    color: #6c757d !important;
+  }
+  
+  .small {
+    font-size: 0.875rem;
+  }
+  
+  .badge {
+    font-weight: 500;
+    padding: 0.5em 1em;
+  }
+  

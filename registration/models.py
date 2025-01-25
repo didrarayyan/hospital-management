@@ -1,5 +1,6 @@
 from django.db import models
 from django.core.validators import RegexValidator
+from django.utils import timezone
 
 class Doctor(models.Model):
     SPECIALIZATION_CHOICES = [
@@ -20,6 +21,16 @@ class Doctor(models.Model):
     
     def __str__(self):
         return f"Dr. {self.first_name} {self.last_name} - {self.specialization}"
+    
+    def get_total_appointments(self):
+        return self.appointments.count()
+    
+    def get_scheduled_appointments(self):
+        return self.appointments.filter(status='SCHEDULED').count()
+    
+    def get_today_appointments(self):
+        today = timezone.now().date()
+        return self.appointments.filter(appointment_date__date=today).count()
 
 class Patient(models.Model):
     GENDER_CHOICES = [
@@ -50,6 +61,16 @@ class Patient(models.Model):
     
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
+    
+    def get_active_appointments(self):
+        return self.appointments.filter(status='SCHEDULED').count()
+    
+    def get_total_appointments(self):
+        return self.appointments.count()
+    
+    def get_age(self):
+        today = timezone.now().date()
+        return today.year - self.date_of_birth.year - ((today.month, today.day) < (self.date_of_birth.month, self.date_of_birth.day))
 
 class Appointment(models.Model):
     STATUS_CHOICES = [
@@ -63,6 +84,8 @@ class Appointment(models.Model):
     appointment_date = models.DateTimeField(verbose_name="Appointment Date")
     reason = models.TextField(verbose_name="Reason for Visit")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SCHEDULED')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['appointment_date']
@@ -71,3 +94,6 @@ class Appointment(models.Model):
     
     def __str__(self):
         return f"{self.patient} - {self.appointment_date}"
+    
+    def is_upcoming(self):
+        return self.appointment_date > timezone.now()

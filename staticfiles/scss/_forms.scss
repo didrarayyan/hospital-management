@@ -1,0 +1,35 @@
+.form-control {
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    padding: 12px;
+    transition: all 0.3s;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+      border-color: #3498db;
+    }
+  }
+  
+  .form-label {
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+  }
+  
+  .form-select {
+    border-radius: 8px;
+    padding: 12px;
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.25);
+      border-color: #3498db;
+    }
+  }
+  
+  .input-group {
+    .input-group-text {
+      background-color: #f8f9fa;
+      border-color: #dee2e6;
+    }
+  }
+  

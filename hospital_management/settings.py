@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'registration',
+    'sass_processor',
 ]
 
 MIDDLEWARE = [
@@ -89,6 +90,18 @@ USE_TZ = True
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# SASS processor settings
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'sass_processor.finders.CssFinder',
+]
+
+SASS_PROCESSOR_ROOT = BASE_DIR / 'static'
+SASS_PROCESSOR_INCLUDE_DIRS = [
+    BASE_DIR / 'static/scss',
+]
 
 # Media files
 MEDIA_URL = '/media/'

@@ -11,6 +11,8 @@ urlpatterns = [
     # Appointment URLs
     path('appointments/', views.AppointmentListView.as_view(), name='appointment_list'),
     path('book-appointment/', views.book_appointment, name='book_appointment'),
+    path('appointments/<int:pk>/edit/', views.AppointmentUpdateView.as_view(), name='appointment_edit'),
+    path('appointments/<int:pk>/cancel/', views.appointment_cancel, name='appointment_cancel'),
     
     # Doctor URLs
     path('doctors/', views.DoctorListView.as_view(), name='doctor_list'),
