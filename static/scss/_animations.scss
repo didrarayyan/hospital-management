@@ -44,10 +44,10 @@
       color: #fff !important;
       
       &:hover {
-          background: rgba(255, 255, 255, 0.1);
+          background-color: #fff !important;
+          color: #0d6efd !important;
           transform: translateY(-2px);
           box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
-          animation: glowButton 1.5s infinite;
       }
       
       &:active {
@@ -99,5 +99,24 @@
   &:focus {
       transform: translateY(-2px);
       box-shadow: 0 4px 15px rgba(52, 152, 219, 0.2);
+  }
+}
+
+// Button animations
+.btn-outline-light, .btn-light {
+  background: transparent;
+  border: 2px solid #fff;
+  color: #fff !important;
+  transition: all 0.3s ease;
+
+  &:hover {
+      background-color: #fff !important;
+      color: #0d6efd !important;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  &:active {
+      transform: translateY(1px);
   }
 }

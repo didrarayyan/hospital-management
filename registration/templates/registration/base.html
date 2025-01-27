@@ -22,6 +22,25 @@
     <!-- Custom SCSS -->
     <link href="{% static 'scss/main.css' %}" rel="stylesheet">
     <link href="{% static 'css/styles.css' %}" rel="stylesheet">
+
+    <style>
+        .nav-link.btn {
+            transition: all 0.3s ease;
+        }
+        .nav-link.btn:hover {
+            background-color: white !important;
+            color: #0d6efd !important;
+        }
+        .btn-outline-light, .btn-light {
+            background-color: transparent;
+            border: 1px solid white;
+            color: white;
+        }
+        .btn-outline-light:hover, .btn-light:hover {
+            background-color: white !important;
+            color: #0d6efd !important;
+        }
+    </style>
 </head>
 <body>
     <!-- Navigation -->
@@ -64,15 +83,51 @@
                             <i class="fas fa-user-plus me-1"></i> Register Patient
                         </a>
                     </li>
-                    <li class="nav-item">
+                    <li class="nav-item me-2">
                         <a class="nav-link btn btn-outline-light" href="{% url 'book_appointment' %}">
                             <i class="fas fa-calendar-plus me-1"></i> Book Appointment
                         </a>
                     </li>
+                    {% if user.is_authenticated %}
+                    <li class="nav-item">
+                        <form id="logout-form" action="{% url 'logout' %}" method="POST" style="display: inline;">
+                            {% csrf_token %}
+                            <button type="submit" class="nav-link btn btn-outline-light">
+                                <i class="fas fa-sign-out-alt me-1"></i> Logout
+                            </button>
+                        </form>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
     </nav>
+
+    <!-- Dashboard Stats (Homepage Only) -->
+    {% if request.resolver_match.url_name == 'patient_list' and user.is_authenticated %}
+    <div class="bg-light py-4 mb-4">
+        <div class="container">
+            <div class="row text-center">
+                <div class="col-md-3">
+                    <h5 class="mb-2">Total Patients</h5>
+                    <span class="h3 text-primary">{{ total_patients }}</span>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-2">Active Appointments</h5>
+                    <span class="h3 text-warning">{{ active_appointments }}</span>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-2">Available Doctors</h5>
+                    <span class="h3 text-success">{{ available_doctors }}</span>
+                </div>
+                <div class="col-md-3">
+                    <h5 class="mb-2">Today's Appointments</h5>
+                    <span class="h3 text-info">{{ today_appointments }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <!-- Main Content -->
     <div class="container my-4 fade-in">

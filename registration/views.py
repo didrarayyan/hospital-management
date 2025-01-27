@@ -3,9 +3,12 @@ from django.views.generic import ListView, CreateView, UpdateView, DetailView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils import timezone
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import Patient, Appointment, Doctor
 from .forms import PatientRegistrationForm, AppointmentForm, DoctorForm
 
+@login_required
 def register_patient(request):
     if request.method == 'POST':
         form = PatientRegistrationForm(request.POST, request.FILES)
@@ -17,6 +20,7 @@ def register_patient(request):
         form = PatientRegistrationForm()
     return render(request, 'registration/register_patient.html', {'form': form})
 
+@login_required
 def book_appointment(request):
     if request.method == 'POST':
         form = AppointmentForm(request.POST)
@@ -30,6 +34,7 @@ def book_appointment(request):
         form = AppointmentForm()
     return render(request, 'registration/book_appointment.html', {'form': form})
 
+@login_required
 def appointment_cancel(request, pk):
     appointment = get_object_or_404(Appointment, pk=pk)
     appointment.status = 'CANCELLED'
@@ -37,7 +42,7 @@ def appointment_cancel(request, pk):
     messages.success(request, 'Appointment cancelled successfully!')
     return redirect('appointment_list')
 
-class PatientListView(ListView):
+class PatientListView(LoginRequiredMixin, ListView):
     model = Patient
     template_name = 'registration/patient_list.html'
     context_object_name = 'patients'
@@ -55,7 +60,7 @@ class PatientListView(ListView):
         ).count()
         return context
 
-class PatientDetailView(DetailView):
+class PatientDetailView(LoginRequiredMixin, DetailView):
     model = Patient
     template_name = 'registration/patient_detail.html'
     context_object_name = 'patient'
@@ -66,7 +71,7 @@ class PatientDetailView(DetailView):
         context['active_appointments'] = self.object.appointments.filter(status='SCHEDULED').count()
         return context
 
-class PatientUpdateView(UpdateView):
+class PatientUpdateView(LoginRequiredMixin, UpdateView):
     model = Patient
     form_class = PatientRegistrationForm
     template_name = 'registration/register_patient.html'
@@ -76,7 +81,7 @@ class PatientUpdateView(UpdateView):
         messages.success(self.request, 'Patient information updated successfully!')
         return super().form_valid(form)
 
-class AppointmentListView(ListView):
+class AppointmentListView(LoginRequiredMixin, ListView):
     model = Appointment
     template_name = 'registration/appointment_list.html'
     context_object_name = 'appointments'
@@ -93,7 +98,7 @@ class AppointmentListView(ListView):
         ).count()
         return context
 
-class AppointmentUpdateView(UpdateView):
+class AppointmentUpdateView(LoginRequiredMixin, UpdateView):
     model = Appointment
     form_class = AppointmentForm
     template_name = 'registration/book_appointment.html'
@@ -103,7 +108,7 @@ class AppointmentUpdateView(UpdateView):
         messages.success(self.request, 'Appointment updated successfully!')
         return super().form_valid(form)
 
-class DoctorListView(ListView):
+class DoctorListView(LoginRequiredMixin, ListView):
     model = Doctor
     template_name = 'registration/doctor_list.html'
     context_object_name = 'doctors'
@@ -117,7 +122,7 @@ class DoctorListView(ListView):
         context['total_appointments'] = Appointment.objects.count()
         return context
 
-class DoctorCreateView(CreateView):
+class DoctorCreateView(LoginRequiredMixin, CreateView):
     model = Doctor
     form_class = DoctorForm
     template_name = 'registration/doctor_form.html'
@@ -127,7 +132,7 @@ class DoctorCreateView(CreateView):
         messages.success(self.request, 'Doctor added successfully!')
         return super().form_valid(form)
 
-class DoctorUpdateView(UpdateView):
+class DoctorUpdateView(LoginRequiredMixin, UpdateView):
     model = Doctor
     form_class = DoctorForm
     template_name = 'registration/doctor_form.html'
@@ -137,7 +142,7 @@ class DoctorUpdateView(UpdateView):
         messages.success(self.request, 'Doctor information updated successfully!')
         return super().form_valid(form)
 
-class DoctorDetailView(DetailView):
+class DoctorDetailView(LoginRequiredMixin, DetailView):
     model = Doctor
     template_name = 'registration/doctor_detail.html'
     context_object_name = 'doctor'
