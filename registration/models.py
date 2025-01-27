@@ -18,9 +18,19 @@ class Doctor(models.Model):
     email = models.EmailField()
     schedule = models.TextField()
     is_available = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['last_name', 'first_name']
+        verbose_name = "Doctor"
+        verbose_name_plural = "Doctors"
     
     def __str__(self):
         return f"Dr. {self.first_name} {self.last_name} - {self.specialization}"
+    
+    def get_full_name(self):
+        return f"Dr. {self.first_name} {self.last_name}"
     
     def get_total_appointments(self):
         return self.appointments.count()
@@ -53,6 +63,8 @@ class Patient(models.Model):
     registration_date = models.DateTimeField(auto_now_add=True)
     medical_history = models.TextField(blank=True, verbose_name="Medical History")
     photo = models.ImageField(upload_to='patient_photos/', blank=True, null=True, verbose_name="Patient Photo")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
         ordering = ['-registration_date']
@@ -60,6 +72,9 @@ class Patient(models.Model):
         verbose_name_plural = "Patients"
     
     def __str__(self):
+        return f"{self.first_name} {self.last_name}"
+    
+    def get_full_name(self):
         return f"{self.first_name} {self.last_name}"
     
     def get_active_appointments(self):
@@ -77,6 +92,7 @@ class Appointment(models.Model):
         ('SCHEDULED', 'Scheduled'),
         ('COMPLETED', 'Completed'),
         ('CANCELLED', 'Cancelled'),
+        ('PENDING', 'Pending'),
     ]
     
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
@@ -84,6 +100,7 @@ class Appointment(models.Model):
     appointment_date = models.DateTimeField(verbose_name="Appointment Date")
     reason = models.TextField(verbose_name="Reason for Visit")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SCHEDULED')
+    notes = models.TextField(blank=True, verbose_name="Additional Notes")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
@@ -97,3 +114,12 @@ class Appointment(models.Model):
     
     def is_upcoming(self):
         return self.appointment_date > timezone.now()
+    
+    def get_status_color(self):
+        status_colors = {
+            'SCHEDULED': 'primary',
+            'COMPLETED': 'success',
+            'CANCELLED': 'danger',
+            'PENDING': 'warning'
+        }
+        return status_colors.get(self.status, 'secondary')

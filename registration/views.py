@@ -51,13 +51,24 @@ class PatientListView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        today = timezone.now().date()
+        
         context['total_patients'] = Patient.objects.count()
         context['new_patients_month'] = Patient.objects.filter(
             registration_date__month=timezone.now().month
         ).count()
         context['active_appointments'] = Appointment.objects.filter(
-            status='SCHEDULED'
+            status='SCHEDULED',
+            appointment_date__gte=today
         ).count()
+        context['available_doctors'] = Doctor.objects.filter(is_available=True).count()
+        context['today_appointments'] = Appointment.objects.filter(
+            appointment_date__date=today
+        ).count()
+        context['recent_appointments'] = Appointment.objects.select_related(
+            'patient', 'doctor'
+        ).order_by('-created_at')[:5]
+        
         return context
 
 class PatientDetailView(LoginRequiredMixin, DetailView):
