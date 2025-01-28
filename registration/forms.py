@@ -1,6 +1,6 @@
 from django import forms
 from django.utils import timezone
-from .models import Patient, Appointment, Doctor
+from .models import Patient, Appointment, Doctor, user as User
 
 class PatientRegistrationForm(forms.ModelForm):
     class Meta:
@@ -29,7 +29,7 @@ class AppointmentForm(forms.ModelForm):
 
     class Meta:
         model = Appointment
-        fields = ['patient', 'doctor', 'appointment_date', 'reason']
+        fields = ['patient', 'doctor', 'appointment_date', 'reason', 'notes']
         widgets = {
             'patient': forms.Select(attrs={'class': 'form-select'}),
             'doctor': forms.Select(attrs={'class': 'form-select'}),
@@ -37,6 +37,11 @@ class AppointmentForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Reason for appointment'
+            }),
+            'notes': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional notes'
             }),
         }
 
@@ -52,16 +57,76 @@ class AppointmentForm(forms.ModelForm):
         return date
 
 class DoctorForm(forms.ModelForm):
+    first_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}))
+    last_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}))
+    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter email'}))
+    phone_number = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}))
+
     class Meta:
         model = Doctor
-        fields = ['first_name', 'last_name', 'specialization', 'phone_number', 
-                 'email', 'schedule', 'is_available']
+        fields = ['specialization', 'schedule', 'is_available']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}),
             'specialization': forms.Select(attrs={'class': 'form-select'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter email'}),
             'schedule': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter work schedule'}),
             'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+    def save(self, commit=True):
+        doctor = super().save(commit=False)
+        if commit:
+            user_data = {
+                'first_name': self.cleaned_data['first_name'],
+                'last_name': self.cleaned_data['last_name'],
+                'email': self.cleaned_data['email'],
+                'phone_number': self.cleaned_data['phone_number'],
+                'role': 'DOCTOR'
+            }
+            if doctor.user_id:
+                User.objects.filter(id=doctor.user_id).update(**user_data)
+            else:
+                user = User.objects.create(**user_data)
+                doctor.user = user
+            doctor.save()
+        return doctor
+
+class OTPAuthForm(forms.Form):
+    otp_token = forms.CharField(
+        label='OTP Token',
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter 6-digit OTP token',
+            'autocomplete': 'off'
+        })
+    )
+
+    def clean_otp_token(self):
+        token = self.cleaned_data['otp_token']
+        if not token.isdigit():
+            raise forms.ValidationError("OTP token must contain only numbers")
+        return token
+
+class SystemSettingsForm(forms.Form):
+    site_name = forms.CharField(
+        max_length=100, 
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    maintenance_mode = forms.BooleanField(
+        required=False, 
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    session_timeout = forms.IntegerField(
+        min_value=300,
+        max_value=86400,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )
+    enable_2fa = forms.BooleanField(
+        required=False, 
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+    allowed_login_attempts = forms.IntegerField(
+        min_value=3,
+        max_value=10,
+        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    )

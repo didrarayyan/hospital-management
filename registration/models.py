@@ -1,6 +1,29 @@
 from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
+from django.contrib.auth.models import AbstractUser
+
+class user(AbstractUser):
+    ROLE_CHOICES = [
+        ('ADMIN', 'Administrator'),
+        ('DOCTOR', 'Doctor'),
+        ('NURSE', 'Nurse'),
+        ('STAFF', 'Staff'),
+    ]
+    
+    role = models.CharField(max_length=10, choices=ROLE_CHOICES)
+    phone_number = models.CharField(max_length=15, blank=True)
+    is_active = models.BooleanField(default=True)
+    two_factor_enabled = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = 'user'
+        verbose_name_plural = 'users'
+
+    def __str__(self):
+        return f"{self.get_full_name()} ({self.role})"
 
 class Doctor(models.Model):
     SPECIALIZATION_CHOICES = [
@@ -11,26 +34,23 @@ class Doctor(models.Model):
         ('ORTHOPEDICS', 'Orthopedics'),
     ]
     
-    first_name = models.CharField(max_length=100)
-    last_name = models.CharField(max_length=100)
+    user = models.OneToOneField(user, on_delete=models.CASCADE, related_name='doctor_profile')
     specialization = models.CharField(max_length=20, choices=SPECIALIZATION_CHOICES)
-    phone_number = models.CharField(max_length=15)
-    email = models.EmailField()
     schedule = models.TextField()
     is_available = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['last_name', 'first_name']
-        verbose_name = "Doctor"
-        verbose_name_plural = "Doctors"
+        ordering = ['user__last_name', 'user__first_name']
+        verbose_name = "doctor"
+        verbose_name_plural = "doctors"
     
     def __str__(self):
-        return f"Dr. {self.first_name} {self.last_name} - {self.specialization}"
+        return f"Dr. {self.user.get_full_name()} - {self.specialization}"
     
     def get_full_name(self):
-        return f"Dr. {self.first_name} {self.last_name}"
+        return f"Dr. {self.user.get_full_name()}"
     
     def get_total_appointments(self):
         return self.appointments.count()
@@ -68,8 +88,8 @@ class Patient(models.Model):
     
     class Meta:
         ordering = ['-registration_date']
-        verbose_name = "Patient"
-        verbose_name_plural = "Patients"
+        verbose_name = "patient"
+        verbose_name_plural = "patients"
     
     def __str__(self):
         return f"{self.first_name} {self.last_name}"
@@ -106,8 +126,8 @@ class Appointment(models.Model):
     
     class Meta:
         ordering = ['appointment_date']
-        verbose_name = "Appointment"
-        verbose_name_plural = "Appointments"
+        verbose_name = "appointment"
+        verbose_name_plural = "appointments"
     
     def __str__(self):
         return f"{self.patient} - {self.appointment_date}"
@@ -123,3 +143,20 @@ class Appointment(models.Model):
             'PENDING': 'warning'
         }
         return status_colors.get(self.status, 'secondary')
+
+class AuditLog(models.Model):
+    user = models.ForeignKey(user, on_delete=models.CASCADE)
+    action = models.CharField(max_length=64)
+    model_name = models.CharField(max_length=64)
+    object_id = models.IntegerField()
+    ip_address = models.GenericIPAddressField()
+    user_agent = models.TextField()
+    action_time = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-action_time']
+        verbose_name = "audit_log"
+        verbose_name_plural = "audit_logs"
+    
+    def __str__(self):
+        return f"{self.user} - {self.action} - {self.action_time}"
