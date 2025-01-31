@@ -51,6 +51,8 @@
                             </td>
                             <td>
                                 {{ appointment.appointment_date|date:"F d, Y" }}
+                                <br>
+                                <small class="text-muted">{{ appointment.appointment_time|time:"g:i A" }}</small>
                             </td>
                             <td>{{ appointment.reason }}</td>
                             <td>
@@ -63,7 +65,7 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'registration:appointment_update' appointment.pk %}" class="btn btn-warning btn-sm">
+                                    <a href="{% url 'registration:appointment_edit' appointment.pk %}" class="btn btn-warning btn-sm">
                                         <i class="fas fa-edit me-1"></i> Edit
                                     </a>
                                     {% if appointment.status == 'SCHEDULED' %}

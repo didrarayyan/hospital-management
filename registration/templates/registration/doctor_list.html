@@ -43,12 +43,12 @@
                     <tbody>
                         {% for doctor in doctors %}
                         <tr>
-                            <td>Dr. {{ doctor.first_name }} {{ doctor.last_name }}</td>
+                            <td>Dr. {{ doctor.user.first_name }} {{ doctor.user.last_name }}</td>
                             <td>{{ doctor.specialization }}</td>
                             <td>
                                 <small>
-                                    <i class="fas fa-envelope"></i> {{ doctor.email }}<br>
-                                    <i class="fas fa-phone"></i> {{ doctor.phone_number }}
+                                    <i class="fas fa-envelope"></i> {{ doctor.user.email }}<br>
+                                    <i class="fas fa-phone"></i> {{ doctor.user.phone_number }}
                                 </small>
                             </td>
                             <td>{{ doctor.schedule }}</td>
@@ -59,10 +59,10 @@
                             </td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'doctor_detail' doctor.pk %}" class="btn btn-info btn-sm">
+                                    <a href="{% url 'registration:doctor_detail' doctor.pk %}" class="btn btn-info btn-sm">
                                         <i class="fas fa-eye"></i> View
                                     </a>
-                                    <a href="{% url 'doctor_edit' doctor.pk %}" class="btn btn-warning btn-sm">
+                                    <a href="{% url 'registration:doctor_edit' doctor.pk %}" class="btn btn-warning btn-sm">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
                                 </div>
@@ -79,6 +79,7 @@
         </div>
     </div>
 
+    {% if is_paginated %}
     <nav aria-label="Page navigation" class="mt-4">
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
@@ -110,5 +111,6 @@
             {% endif %}
         </ul>
     </nav>
+    {% endif %}
 </div>
 {% endblock %}

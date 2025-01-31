@@ -192,13 +192,12 @@ class PatientDetailView(LoginRequiredMixin, DetailView):
         context.update({
             'appointments': self.object.appointments.all().order_by('-appointment_date'),
             'active_appointments': self.object.appointments.filter(status='SCHEDULED').count(),
-            'medical_history': self.object.medical_history.all().order_by('-date'),
             'recent_visits': self.object.appointments.filter(
                 status='COMPLETED'
             ).order_by('-appointment_date')[:5]
         })
         return context
-
+    
 class PatientUpdateView(LoginRequiredMixin, UpdateView):
     model = Patient
     form_class = PatientRegistrationForm
