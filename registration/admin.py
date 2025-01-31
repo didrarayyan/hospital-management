@@ -26,7 +26,7 @@ class DoctorAdmin(admin.ModelAdmin):
 
 @admin.register(Patient)
 class PatientAdmin(admin.ModelAdmin):
-    list_display = ['first_name', 'last_name', 'phone_number', 'email', 'registration_date', 'get_photo']
+    list_display = ['first_name', 'last_name', 'phone', 'email', 'registration_date', 'get_photo']
     search_fields = ['first_name', 'last_name', 'phone_number']
     list_filter = ['gender', 'registration_date']
     date_hierarchy = 'registration_date'

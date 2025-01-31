@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.views.generic import ListView, CreateView, UpdateView, DetailView, FormView
+from django.views.generic import ListView, CreateView, UpdateView, DetailView, FormView, TemplateView
 from django.contrib import messages
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -9,7 +9,14 @@ from django.utils.decorators import method_decorator
 from django.db import models
 from django_otp.plugins.otp_totp.models import TOTPDevice
 from .models import Patient, Appointment, Doctor, user as User, AuditLog
-from .forms import PatientRegistrationForm, AppointmentForm, DoctorForm, SystemSettingsForm, OTPAuthForm
+from .forms import (
+    PatientRegistrationForm, 
+    AppointmentForm, 
+    DoctorForm, 
+    SystemSettingsForm, 
+    OTPAuthForm,
+    SecuritySettingsForm
+)
 from .decorators import role_required, two_factor_required, audit_log
 
 class DashboardView(LoginRequiredMixin, ListView):
@@ -18,27 +25,57 @@ class DashboardView(LoginRequiredMixin, ListView):
     context_object_name = 'recent_patients'
     
     def get_queryset(self):
+        if self.request.user.is_doctor:
+            return Patient.objects.filter(
+                appointments__doctor=self.request.user.doctor
+            ).distinct().order_by('-created_at')[:5]
         return Patient.objects.all().order_by('-created_at')[:5]
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         today = timezone.now().date()
         
-        context.update({
-            'total_patients': Patient.objects.count(),
-            'active_appointments': Appointment.objects.filter(
-                status='SCHEDULED',
-                appointment_date__gte=today
-            ).count(),
-            'available_doctors': Doctor.objects.filter(is_available=True).count(),
-            'today_appointments': Appointment.objects.filter(
-                appointment_date__date=today
-            ).count(),
-            'recent_appointments': Appointment.objects.select_related(
-                'patient', 'doctor'
-            ).order_by('-created_at')[:5],
-            'recent_activities': AuditLog.objects.select_related('user')[:10]
-        })
+        if self.request.user.is_doctor:
+            doctor = self.request.user.doctor
+            context.update({
+                'total_patients': Patient.objects.filter(appointments__doctor=doctor).distinct().count(),
+                'active_appointments': Appointment.objects.filter(
+                    doctor=doctor,
+                    status='SCHEDULED',
+                    appointment_date__gte=today
+                ).count(),
+                'today_appointments': Appointment.objects.filter(
+                    doctor=doctor,
+                    appointment_date__year=today.year,
+                    appointment_date__month=today.month,
+                    appointment_date__day=today.day
+                ).count(),
+                'monthly_appointments': Appointment.objects.filter(
+                    doctor=doctor,
+                    appointment_date__month=today.month
+                ).count(),
+                'recent_appointments': Appointment.objects.filter(
+                    doctor=doctor
+                ).select_related('patient').order_by('-created_at')[:5]
+            })
+        else:
+            context.update({
+                'total_patients': Patient.objects.count(),
+                'active_appointments': Appointment.objects.filter(
+                    status='SCHEDULED',
+                    appointment_date__gte=today
+                ).count(),
+                'available_doctors': Doctor.objects.filter(is_available=True).count(),
+                'today_appointments': Appointment.objects.filter(
+                    appointment_date__year=today.year,
+                    appointment_date__month=today.month,
+                    appointment_date__day=today.day
+                ).count(),
+                'recent_appointments': Appointment.objects.select_related(
+                    'patient', 'doctor'
+                ).order_by('-created_at')[:5],
+                'recent_activities': AuditLog.objects.select_related('user')[:10]
+            })
         return context
 
 class TwoFactorSetupView(LoginRequiredMixin, FormView):
@@ -105,6 +142,7 @@ def appointment_cancel(request, pk):
     messages.success(request, 'Appointment cancelled successfully!')
     return redirect('appointment_list')
 
+@method_decorator(role_required(['ADMIN', 'DOCTOR', 'STAFF']), name='dispatch')
 class PatientListView(LoginRequiredMixin, ListView):
     model = Patient
     template_name = 'registration/patient_list.html'
@@ -134,7 +172,7 @@ class PatientListView(LoginRequiredMixin, ListView):
             ).count(),
             'active_appointments': Appointment.objects.filter(
                 status='SCHEDULED',
-                appointment_date__gte=today
+                appointment_date=today
             ).count(),
             'search_query': self.request.GET.get('search', '')
         })
@@ -192,7 +230,7 @@ class AppointmentListView(LoginRequiredMixin, ListView):
             'total_appointments': Appointment.objects.count(),
             'scheduled_appointments': Appointment.objects.filter(status='SCHEDULED').count(),
             'today_appointments': Appointment.objects.filter(
-                appointment_date__date=today
+                appointment_date=today
             ).count(),
             'recent_appointments': Appointment.objects.select_related(
                 'patient', 'doctor'
@@ -224,11 +262,12 @@ class AppointmentUpdateView(LoginRequiredMixin, UpdateView):
         messages.success(self.request, 'Appointment updated successfully!')
         return super().form_valid(form)
 
+@method_decorator(role_required(['ADMIN', 'DOCTOR']), name='dispatch') 
 class DoctorListView(LoginRequiredMixin, ListView):
     model = Doctor
     template_name = 'registration/doctor_list.html'
     context_object_name = 'doctors'
-    ordering = ['last_name', 'first_name']
+    ordering = ['user__last_name', 'user__first_name']
     paginate_by = 10
 
     def get_queryset(self):
@@ -324,3 +363,158 @@ class SystemSettingsView(LoginRequiredMixin, FormView):
         form.save()
         messages.success(self.request, 'System settings updated successfully!')
         return super().form_valid(form)
+
+class ProfileView(LoginRequiredMixin, DetailView):
+    template_name = 'registration/profile.html'
+    context_object_name = 'profile'
+
+    def get_object(self):
+        return self.request.user
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'appointments': Appointment.objects.filter(
+                doctor=self.request.user.doctor if hasattr(self.request.user, 'doctor') 
+                else None
+            ).order_by('-created_at')[:5],
+            'recent_activities': AuditLog.objects.filter(
+                user=self.request.user
+            ).order_by('-action_time')[:10]
+        })
+        return context
+
+class ProfileUpdateView(LoginRequiredMixin, UpdateView):
+    template_name = 'registration/profile_edit.html'
+    success_url = reverse_lazy('profile')
+    
+    def get_object(self):
+        return self.request.user
+    
+    def get_form_class(self):
+        if hasattr(self.request.user, 'doctor'):
+            return DoctorForm
+        return PatientRegistrationForm
+    
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        messages.success(self.request, 'Profile updated successfully!')
+        return response
+
+class SecuritySettingsView(LoginRequiredMixin, FormView):
+    template_name = 'registration/security_settings.html'
+    form_class = SecuritySettingsForm
+    success_url = reverse_lazy('profile')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        form.save()
+        messages.success(self.request, 'Security settings updated successfully!')
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['two_factor_enabled'] = hasattr(self.request.user, 'totpdevice')
+        return context
+    
+    class AppointmentReportView(LoginRequiredMixin, TemplateView):
+        template_name = 'registration/reports/appointment_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'appointments': Appointment.objects.all().select_related('patient', 'doctor'),
+            'total_appointments': Appointment.objects.count(),
+            'completed_appointments': Appointment.objects.filter(status='COMPLETED').count(),
+            'scheduled_appointments': Appointment.objects.filter(status='SCHEDULED').count(),
+            'cancelled_appointments': Appointment.objects.filter(status='CANCELLED').count()
+        })
+        return context
+
+class PatientReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'registration/reports/patient_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'patients': Patient.objects.all().select_related('appointments'),
+            'total_patients': Patient.objects.count(),
+            'active_patients': Patient.objects.filter(appointments__status='SCHEDULED').distinct().count(),
+            'new_patients_month': Patient.objects.filter(
+                registration_date__month=timezone.now().month
+            ).count(),
+            'patients_by_gender': Patient.objects.values('gender').annotate(count=models.Count('id')),
+            'patients_by_blood_group': Patient.objects.values('blood_group').annotate(count=models.Count('id'))
+        })
+        return context
+
+class DoctorReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'registration/reports/doctor_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'doctors': Doctor.objects.all().select_related('user'),
+            'total_doctors': Doctor.objects.count(),
+            'available_doctors': Doctor.objects.filter(is_available=True).count(),
+            'doctors_by_specialization': Doctor.objects.values('specialization').annotate(count=models.Count('id')),
+            'appointment_stats': Doctor.objects.annotate(
+                total_appointments=models.Count('appointments'),
+                completed_appointments=models.Count('appointments', filter=models.Q(appointments__status='COMPLETED')),
+                scheduled_appointments=models.Count('appointments', filter=models.Q(appointments__status='SCHEDULED'))
+            )
+        })
+        return context
+
+class AppointmentReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'registration/reports/appointment_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'appointments': Appointment.objects.all().select_related('patient', 'doctor'),
+            'total_appointments': Appointment.objects.count(),
+            'completed_appointments': Appointment.objects.filter(status='COMPLETED').count(),
+            'scheduled_appointments': Appointment.objects.filter(status='SCHEDULED').count(),
+            'cancelled_appointments': Appointment.objects.filter(status='CANCELLED').count()
+        })
+        return context
+
+class PatientReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'registration/reports/patient_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'patients': Patient.objects.all(),
+            'total_patients': Patient.objects.count(),
+            'active_patients': Patient.objects.filter(appointments__status='SCHEDULED').distinct().count(),
+            'new_patients_month': Patient.objects.filter(
+                registration_date__month=timezone.now().month
+            ).count(),
+            'patients_by_gender': Patient.objects.values('gender').annotate(count=models.Count('id')),
+            'patients_by_blood_group': Patient.objects.values('blood_group').annotate(count=models.Count('id'))
+        })
+        return context
+
+class DoctorReportView(LoginRequiredMixin, TemplateView):
+    template_name = 'registration/reports/doctor_report.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'doctors': Doctor.objects.all().select_related('user'),
+            'total_doctors': Doctor.objects.count(),
+            'available_doctors': Doctor.objects.filter(is_available=True).count(),
+            'doctors_by_specialization': Doctor.objects.values('specialization').annotate(count=models.Count('id')),
+            'appointment_stats': Doctor.objects.annotate(
+                total_appointments=models.Count('appointments'),
+                completed_appointments=models.Count('appointments', filter=models.Q(appointments__status='COMPLETED')),
+                scheduled_appointments=models.Count('appointments', filter=models.Q(appointments__status='SCHEDULED'))
+            )
+        })
+        return context

@@ -4,62 +4,151 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h3>Register New Patient</h3>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h3 class="mb-0">
+                        <i class="fas fa-user-plus me-2"></i>Register New Patient
+                    </h3>
                 </div>
                 <div class="card-body">
                     <form method="post" enctype="multipart/form-data" class="row g-3">
                         {% csrf_token %}
                         
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.non_field_errors %}
+                                {{ error }}
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+
                         <div class="col-md-6">
-                            <label for="{{ form.first_name.id_for_label }}" class="form-label">First Name</label>
+                            <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>First Name
+                            </label>
                             {{ form.first_name }}
+                            {% if form.first_name.errors %}
+                                <div class="text-danger small">{{ form.first_name.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.last_name.id_for_label }}" class="form-label">Last Name</label>
+                            <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user me-1"></i>Last Name
+                            </label>
                             {{ form.last_name }}
+                            {% if form.last_name.errors %}
+                                <div class="text-danger small">{{ form.last_name.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">Date of Birth</label>
+                            <label for="{{ form.date_of_birth.id_for_label }}" class="form-label">
+                                <i class="fas fa-calendar me-1"></i>Date of Birth
+                            </label>
                             {{ form.date_of_birth }}
+                            {% if form.date_of_birth.errors %}
+                                <div class="text-danger small">{{ form.date_of_birth.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.gender.id_for_label }}" class="form-label">Gender</label>
+                            <label for="{{ form.gender.id_for_label }}" class="form-label">
+                                <i class="fas fa-venus-mars me-1"></i>Gender
+                            </label>
                             {{ form.gender }}
+                            {% if form.gender.errors %}
+                                <div class="text-danger small">{{ form.gender.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.phone_number.id_for_label }}" class="form-label">Phone Number</label>
-                            {{ form.phone_number }}
+                            <label for="{{ form.phone.id_for_label }}" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Phone Number
+                            </label>
+                            {{ form.phone }}
+                            {% if form.phone.errors %}
+                                <div class="text-danger small">{{ form.phone.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-md-6">
-                            <label for="{{ form.email.id_for_label }}" class="form-label">Email</label>
+                            <label for="{{ form.email.id_for_label }}" class="form-label">
+                                <i class="fas fa-envelope me-1"></i>Email
+                            </label>
                             {{ form.email }}
+                            {% if form.email.errors %}
+                                <div class="text-danger small">{{ form.email.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-12">
-                            <label for="{{ form.address.id_for_label }}" class="form-label">Address</label>
+                            <label for="{{ form.address.id_for_label }}" class="form-label">
+                                <i class="fas fa-map-marker-alt me-1"></i>Address
+                            </label>
                             {{ form.address }}
+                            {% if form.address.errors %}
+                                <div class="text-danger small">{{ form.address.errors }}</div>
+                            {% endif %}
                         </div>
-                        
-                        <div class="col-12">
-                            <label for="{{ form.medical_history.id_for_label }}" class="form-label">Medical History</label>
-                            {{ form.medical_history }}
-                        </div>
-                        
+
                         <div class="col-md-6">
-                            <label for="{{ form.photo.id_for_label }}" class="form-label">Photo</label>
-                            {{ form.photo }}
+                            <label for="{{ form.blood_group.id_for_label }}" class="form-label">
+                                <i class="fas fa-tint me-1"></i>Blood Group
+                            </label>
+                            {{ form.blood_group }}
+                            {% if form.blood_group.errors %}
+                                <div class="text-danger small">{{ form.blood_group.errors }}</div>
+                            {% endif %}
                         </div>
                         
                         <div class="col-12">
-                            <button type="submit" class="btn btn-primary">Register Patient</button>
-                            <a href="{% url 'patient_list' %}" class="btn btn-secondary">Cancel</a>
+                            <label for="{{ form.medical_history.id_for_label }}" class="form-label">
+                                <i class="fas fa-notes-medical me-1"></i>Medical History
+                            </label>
+                            {{ form.medical_history }}
+                            {% if form.medical_history.errors %}
+                                <div class="text-danger small">{{ form.medical_history.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.emergency_contact_name.id_for_label }}" class="form-label">
+                                <i class="fas fa-user-friends me-1"></i>Emergency Contact Name
+                            </label>
+                            {{ form.emergency_contact_name }}
+                            {% if form.emergency_contact_name.errors %}
+                                <div class="text-danger small">{{ form.emergency_contact_name.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.emergency_contact_phone.id_for_label }}" class="form-label">
+                                <i class="fas fa-phone me-1"></i>Emergency Contact Phone
+                            </label>
+                            {{ form.emergency_contact_phone }}
+                            {% if form.emergency_contact_phone.errors %}
+                                <div class="text-danger small">{{ form.emergency_contact_phone.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="{{ form.photo.id_for_label }}" class="form-label">
+                                <i class="fas fa-camera me-1"></i>Patient Photo
+                            </label>
+                            {{ form.photo }}
+                            {% if form.photo.errors %}
+                                <div class="text-danger small">{{ form.photo.errors }}</div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-12 mt-4">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save me-1"></i>Register Patient
+                            </button>
+                            <a href="{% url 'registration:patient_list' %}" class="btn btn-secondary">
+                                <i class="fas fa-times me-1"></i>Cancel
+                            </a>
                         </div>
                     </form>
                 </div>
@@ -67,4 +156,31 @@
         </div>
     </div>
 </div>
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize date picker
+        const dateInput = document.querySelector('input[type="date"]');
+        if (dateInput) {
+            dateInput.max = new Date().toISOString().split('T')[0];
+        }
+
+        // Preview uploaded photo
+        const photoInput = document.querySelector('input[type="file"]');
+        if (photoInput) {
+            photoInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        // Add preview logic if needed
+                    }
+                    reader.readAsDataURL(e.target.files[0]);
+                }
+            });
+        }
+    });
+</script>
+{% endblock %}
+
 {% endblock %}

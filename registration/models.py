@@ -2,6 +2,7 @@ from django.db import models
 from django.core.validators import RegexValidator
 from django.utils import timezone
 from django.contrib.auth.models import AbstractUser
+from datetime import datetime
 
 class user(AbstractUser):
     ROLE_CHOICES = [
@@ -24,6 +25,10 @@ class user(AbstractUser):
 
     def __str__(self):
         return f"{self.get_full_name()} ({self.role})"
+        
+    @property
+    def is_doctor(self):
+        return hasattr(self, 'doctor_profile') and self.role == 'DOCTOR'
 
 class Doctor(models.Model):
     SPECIALIZATION_CHOICES = [
@@ -60,12 +65,23 @@ class Doctor(models.Model):
     
     def get_today_appointments(self):
         today = timezone.now().date()
-        return self.appointments.filter(appointment_date__date=today).count()
+        return self.appointments.filter(appointment_date=today).count()
 
 class Patient(models.Model):
     GENDER_CHOICES = [
         ('M', 'Male'),
         ('F', 'Female'),
+    ]
+    
+    BLOOD_GROUP_CHOICES = [
+        ('A+', 'A+'),
+        ('A-', 'A-'),
+        ('B+', 'B+'),
+        ('B-', 'B-'),
+        ('AB+', 'AB+'),
+        ('AB-', 'AB-'),
+        ('O+', 'O+'),
+        ('O-', 'O-'),
     ]
     
     phone_regex = RegexValidator(
@@ -77,11 +93,14 @@ class Patient(models.Model):
     last_name = models.CharField(max_length=100, verbose_name="Last Name")
     date_of_birth = models.DateField(verbose_name="Date of Birth")
     gender = models.CharField(max_length=1, choices=GENDER_CHOICES, verbose_name="Gender")
-    phone_number = models.CharField(validators=[phone_regex], max_length=15, verbose_name="Phone Number")
+    phone = models.CharField(validators=[phone_regex], max_length=15, verbose_name="Phone Number")
     email = models.EmailField(blank=True, verbose_name="Email")
     address = models.TextField(verbose_name="Address")
+    blood_group = models.CharField(max_length=3, choices=BLOOD_GROUP_CHOICES, verbose_name="Blood Group")
     registration_date = models.DateTimeField(auto_now_add=True)
     medical_history = models.TextField(blank=True, verbose_name="Medical History")
+    emergency_contact_name = models.CharField(max_length=100, verbose_name="Emergency Contact Name")
+    emergency_contact_phone = models.CharField(validators=[phone_regex], max_length=15, verbose_name="Emergency Contact Phone")
     photo = models.ImageField(upload_to='patient_photos/', blank=True, null=True, verbose_name="Patient Photo")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -117,7 +136,8 @@ class Appointment(models.Model):
     
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name='appointments')
     doctor = models.ForeignKey(Doctor, on_delete=models.CASCADE, related_name='appointments')
-    appointment_date = models.DateTimeField(verbose_name="Appointment Date")
+    appointment_date = models.DateField(verbose_name="Appointment Date")
+    appointment_time = models.TimeField(verbose_name="Appointment Time")
     reason = models.TextField(verbose_name="Reason for Visit")
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='SCHEDULED')
     notes = models.TextField(blank=True, verbose_name="Additional Notes")
@@ -125,15 +145,16 @@ class Appointment(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['appointment_date']
+        ordering = ['appointment_date', 'appointment_time']
         verbose_name = "appointment"
         verbose_name_plural = "appointments"
     
     def __str__(self):
-        return f"{self.patient} - {self.appointment_date}"
+        return f"{self.patient} - {self.appointment_date} {self.appointment_time}"
     
     def is_upcoming(self):
-        return self.appointment_date > timezone.now()
+        appointment_datetime = datetime.combine(self.appointment_date, self.appointment_time)
+        return appointment_datetime > timezone.now()
     
     def get_status_color(self):
         status_colors = {
@@ -160,3 +181,19 @@ class AuditLog(models.Model):
     
     def __str__(self):
         return f"{self.user} - {self.action} - {self.action_time}"
+
+class SystemSettings(models.Model):
+    site_name = models.CharField(max_length=100)
+    contact_email = models.EmailField()
+    contact_phone = models.CharField(max_length=15)
+    address = models.TextField()
+    working_hours = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "system_settings"
+        verbose_name_plural = "system_settings"
+
+    def __str__(self):
+        return self.site_name

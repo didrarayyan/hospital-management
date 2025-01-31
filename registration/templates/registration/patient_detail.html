@@ -4,7 +4,7 @@
 <div class="container">
     <div class="row">
         <div class="col-md-4">
-            <div class="card">
+            <div class="card shadow-sm">
                 <div class="card-body text-center">
                     {% if patient.photo %}
                         <img src="{{ patient.photo.url }}" alt="Patient photo" class="rounded-circle img-fluid mb-3" style="max-width: 200px;">
@@ -13,92 +13,141 @@
                             <i class="fas fa-user fa-5x"></i>
                         </div>
                     {% endif %}
-                    <h3>{{ patient.first_name }} {{ patient.last_name }}</h3>
+                    <h3>{{ patient.get_full_name }}</h3>
                     <p class="text-muted">Patient ID: {{ patient.id }}</p>
+                    <div class="mt-3">
+                        <a href="{% url 'registration:patient_update' patient.pk %}" class="btn btn-warning">
+                            <i class="fas fa-edit me-1"></i> Edit Profile
+                        </a>
+                        <a href="{% url 'registration:book_appointment' %}?patient={{ patient.pk }}" class="btn btn-primary ms-2">
+                            <i class="fas fa-calendar-plus me-1"></i> Book Appointment
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <h6>Age</h6>
+                            <span class="h4">{{ patient.get_age }}</span>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h6>Blood Group</h6>
+                            <span class="h4">{{ patient.blood_group }}</span>
+                        </div>
+                        <div class="col-6">
+                            <h6>Total Visits</h6>
+                            <span class="h4">{{ patient.get_total_appointments }}</span>
+                        </div>
+                        <div class="col-6">
+                            <h6>Active Appointments</h6>
+                            <span class="h4">{{ patient.get_active_appointments }}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         
         <div class="col-md-8">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
+            <div class="card shadow-sm">
+                <div class="card-header">
                     <h4 class="mb-0">Patient Information</h4>
-                    <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-warning">
-                        <i class="fas fa-edit"></i> Edit
-                    </a>
                 </div>
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <h6>Date of Birth</h6>
-                            <p>{{ patient.date_of_birth }}</p>
+                            <h6><i class="fas fa-calendar me-2"></i>Date of Birth</h6>
+                            <p>{{ patient.date_of_birth|date:"F d, Y" }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h6>Gender</h6>
+                            <h6><i class="fas fa-venus-mars me-2"></i>Gender</h6>
                             <p>{{ patient.get_gender_display }}</p>
                         </div>
                     </div>
                     
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <h6>Phone Number</h6>
+                            <h6><i class="fas fa-phone me-2"></i>Phone Number</h6>
                             <p>{{ patient.phone_number }}</p>
                         </div>
                         <div class="col-md-6">
-                            <h6>Email</h6>
+                            <h6><i class="fas fa-envelope me-2"></i>Email</h6>
                             <p>{{ patient.email|default:"Not provided" }}</p>
                         </div>
                     </div>
                     
                     <div class="mb-3">
-                        <h6>Address</h6>
+                        <h6><i class="fas fa-map-marker-alt me-2"></i>Address</h6>
                         <p>{{ patient.address }}</p>
                     </div>
                     
                     <div class="mb-3">
-                        <h6>Medical History</h6>
+                        <h6><i class="fas fa-notes-medical me-2"></i>Medical History</h6>
                         <p>{{ patient.medical_history|default:"No medical history recorded"|linebreaks }}</p>
                     </div>
-                    
-                    <div class="mb-3">
-                        <h6>Registration Date</h6>
-                        <p>{{ patient.registration_date|date:"F d, Y H:i" }}</p>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-user-friends me-2"></i>Emergency Contact</h6>
+                            <p>{{ patient.emergency_contact_name }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6><i class="fas fa-phone me-2"></i>Emergency Phone</h6>
+                            <p>{{ patient.emergency_contact_phone }}</p>
+                        </div>
                     </div>
                 </div>
             </div>
             
-            <div class="card mt-4">
-                <div class="card-header">
+            <div class="card shadow-sm mt-4">
+                <div class="card-header d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Appointment History</h4>
+                    <a href="{% url 'registration:book_appointment' %}?patient={{ patient.pk }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-plus me-1"></i> New Appointment
+                    </a>
                 </div>
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table class="table">
+                        <table class="table table-hover">
                             <thead>
                                 <tr>
                                     <th>Date</th>
                                     <th>Doctor</th>
                                     <th>Reason</th>
                                     <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for appointment in patient.appointments.all %}
+                                {% for appointment in appointments %}
                                 <tr>
-                                    <td>{{ appointment.appointment_date|date:"F d, Y H:i" }}</td>
-                                    <td>Dr. {{ appointment.doctor.first_name }} {{ appointment.doctor.last_name }}</td>
+                                    <td>{{ appointment.appointment_date|date:"F d, Y" }}</td>
+                                    <td>
+                                        Dr. {{ appointment.doctor.user.get_full_name }}
+                                        <br>
+                                        <small class="text-muted">{{ appointment.doctor.get_specialization_display }}</small>
+                                    </td>
                                     <td>{{ appointment.reason }}</td>
                                     <td>
-                                        <span class="badge {% if appointment.status == 'SCHEDULED' %}bg-primary
-                                                   {% elif appointment.status == 'COMPLETED' %}bg-success
-                                                   {% else %}bg-danger{% endif %}">
-                                            {{ appointment.status }}
+                                        <span class="badge bg-{{ appointment.get_status_color }}">
+                                            {{ appointment.get_status_display }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'registration:appointment_detail' appointment.pk %}" 
+                                           class="btn btn-info btn-sm text-white">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 {% empty %}
                                 <tr>
-                                    <td colspan="4" class="text-center">No appointments found</td>
+                                    <td colspan="5" class="text-center">No appointments found</td>
                                 </tr>
                                 {% endfor %}
                             </tbody>

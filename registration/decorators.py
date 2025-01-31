@@ -18,10 +18,9 @@ def role_required(allowed_roles):
 def two_factor_required(view_func):
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
-        if request.user.two_factor_enabled:
-            return view_func(request, *args, **kwargs)
-        messages.warning(request, 'Two-factor authentication is required for this action.')
-        return redirect('two_factor_setup')
+        if not request.user.two_factor_enabled:
+            return redirect('registration:two_factor_setup')
+        return view_func(request, *args, **kwargs)
     return wrapper
 
 def audit_log(action_name):

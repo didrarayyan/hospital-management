@@ -1,132 +1,168 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils import timezone
-from .models import Patient, Appointment, Doctor, user as User
+from django_otp.plugins.otp_totp.models import TOTPDevice
+from .models import Patient, Doctor, Appointment, SystemSettings
+
+User = get_user_model()
 
 class PatientRegistrationForm(forms.ModelForm):
     class Meta:
         model = Patient
-        fields = ['first_name', 'last_name', 'date_of_birth', 'gender', 
-                 'phone_number', 'email', 'address', 'medical_history', 'photo']
+        fields = ['first_name', 'last_name', 'date_of_birth', 'gender', 'phone', 'email', 'address', 'blood_group', 'medical_history', 'emergency_contact_name', 'emergency_contact_phone', 'photo']
         widgets = {
-            'first_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
             'date_of_birth': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
             'gender': forms.Select(attrs={'class': 'form-select'}),
-            'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '+1234567890'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'email@example.com'}),
-            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter full address'}),
-            'medical_history': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Enter medical history'}),
-            'photo': forms.FileInput(attrs={'class': 'form-control'}),
+            'phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'blood_group': forms.Select(attrs={'class': 'form-select'}),
+            'medical_history': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'emergency_contact_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'emergency_contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'photo': forms.FileInput(attrs={'class': 'form-control'})
+        }
+
+class DoctorForm(forms.ModelForm):
+    class Meta:
+        model = Doctor
+        fields = ['user', 'specialization', 'schedule', 'is_available']
+        widgets = {
+            'user': forms.Select(attrs={'class': 'form-select'}),
+            'specialization': forms.Select(attrs={'class': 'form-select'}),
+            'schedule': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
 
 class AppointmentForm(forms.ModelForm):
-    appointment_date = forms.DateTimeField(
-        widget=forms.DateTimeInput(
-            attrs={'type': 'datetime-local', 'class': 'form-control'},
-            format='%Y-%m-%dT%H:%M'
-        )
-    )
-
     class Meta:
         model = Appointment
-        fields = ['patient', 'doctor', 'appointment_date', 'reason', 'notes']
+        fields = ['patient', 'doctor', 'appointment_date', 'appointment_time', 'reason', 'status', 'notes']
         widgets = {
             'patient': forms.Select(attrs={'class': 'form-select'}),
             'doctor': forms.Select(attrs={'class': 'form-select'}),
-            'reason': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Reason for appointment'
-            }),
-            'notes': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 3,
-                'placeholder': 'Additional notes'
-            }),
+            'appointment_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'appointment_time': forms.TimeInput(attrs={'class': 'form-control', 'type': 'time'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3})
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['doctor'].queryset = Doctor.objects.filter(is_available=True)
-        self.fields['patient'].queryset = Patient.objects.all().order_by('first_name')
+    def clean(self):
+        cleaned_data = super().clean()
+        appointment_date = cleaned_data.get('appointment_date')
+        appointment_time = cleaned_data.get('appointment_time')
+        doctor = cleaned_data.get('doctor')
 
-    def clean_appointment_date(self):
-        date = self.cleaned_data['appointment_date']
-        if date < timezone.now():
-            raise forms.ValidationError("Appointment date cannot be in the past")
-        return date
+        if appointment_date and appointment_time and doctor:
+            if appointment_date < timezone.now().date():
+                raise forms.ValidationError("Appointment date cannot be in the past")
+            
+            if Appointment.objects.filter(
+                doctor=doctor,
+                appointment_date=appointment_date,
+                appointment_time=appointment_time,
+                status='SCHEDULED'
+            ).exists():
+                raise forms.ValidationError("This time slot is already booked")
 
-class DoctorForm(forms.ModelForm):
-    first_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter first name'}))
-    last_name = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter last name'}))
-    email = forms.EmailField(widget=forms.EmailInput(attrs={'class': 'form-control', 'placeholder': 'Enter email'}))
-    phone_number = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter phone number'}))
+        return cleaned_data
 
+class SystemSettingsForm(forms.ModelForm):
     class Meta:
-        model = Doctor
-        fields = ['specialization', 'schedule', 'is_available']
+        model = SystemSettings
+        fields = ['site_name', 'contact_email', 'contact_phone', 'address', 'working_hours']
         widgets = {
-            'specialization': forms.Select(attrs={'class': 'form-select'}),
-            'schedule': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter work schedule'}),
-            'is_available': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'site_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'contact_email': forms.EmailInput(attrs={'class': 'form-control'}),
+            'contact_phone': forms.TextInput(attrs={'class': 'form-control'}),
+            'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'working_hours': forms.TextInput(attrs={'class': 'form-control'})
         }
 
-    def save(self, commit=True):
-        doctor = super().save(commit=False)
-        if commit:
-            user_data = {
-                'first_name': self.cleaned_data['first_name'],
-                'last_name': self.cleaned_data['last_name'],
-                'email': self.cleaned_data['email'],
-                'phone_number': self.cleaned_data['phone_number'],
-                'role': 'DOCTOR'
-            }
-            if doctor.user_id:
-                User.objects.filter(id=doctor.user_id).update(**user_data)
-            else:
-                user = User.objects.create(**user_data)
-                doctor.user = user
-            doctor.save()
-        return doctor
+class SecuritySettingsForm(forms.Form):
+    current_password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    new_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    confirm_password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={'class': 'form-control'})
+    )
+    enable_2fa = forms.BooleanField(
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
 
-class OTPAuthForm(forms.Form):
+    def __init__(self, user, *args, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+        self.fields['enable_2fa'].initial = hasattr(user, 'totpdevice')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not self.user.check_password(cleaned_data.get('current_password')):
+            raise forms.ValidationError('Current password is incorrect')
+        
+        new_password = cleaned_data.get('new_password')
+        confirm_password = cleaned_data.get('confirm_password')
+        
+        if new_password and new_password != confirm_password:
+            raise forms.ValidationError('New passwords do not match')
+        
+        return cleaned_data
+
+    def save(self):
+        if self.cleaned_data.get('new_password'):
+            self.user.set_password(self.cleaned_data['new_password'])
+        
+        if self.cleaned_data.get('enable_2fa'):
+            TOTPDevice.objects.get_or_create(user=self.user, defaults={'confirmed': True})
+        else:
+            TOTPDevice.objects.filter(user=self.user).delete()
+        
+        self.user.save()
+        return self.user
+
+class OTPVerificationForm(forms.Form):
     otp_token = forms.CharField(
-        label='OTP Token',
         max_length=6,
         min_length=6,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Enter 6-digit OTP token',
-            'autocomplete': 'off'
+            'placeholder': 'Enter 6-digit code'
         })
     )
 
     def clean_otp_token(self):
         token = self.cleaned_data['otp_token']
         if not token.isdigit():
-            raise forms.ValidationError("OTP token must contain only numbers")
+            raise forms.ValidationError("OTP must contain only numbers")
         return token
 
-class SystemSettingsForm(forms.Form):
-    site_name = forms.CharField(
-        max_length=100, 
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+class OTPAuthForm(forms.Form):
+    username = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Username'})
     )
-    maintenance_mode = forms.BooleanField(
-        required=False, 
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    password = forms.CharField(
+        widget=forms.PasswordInput(attrs={'class': 'form-control', 'placeholder': 'Password'})
     )
-    session_timeout = forms.IntegerField(
-        min_value=300,
-        max_value=86400,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
+    otp_token = forms.CharField(
+        max_length=6,
+        min_length=6,
+        widget=forms.TextInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Enter 6-digit code'
+        })
     )
-    enable_2fa = forms.BooleanField(
-        required=False, 
-        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
-    )
-    allowed_login_attempts = forms.IntegerField(
-        min_value=3,
-        max_value=10,
-        widget=forms.NumberInput(attrs={'class': 'form-control'})
-    )
+
+    def clean_otp_token(self):
+        token = self.cleaned_data['otp_token']
+        if not token.isdigit():
+            raise forms.ValidationError("OTP must contain only numbers")
+        return token

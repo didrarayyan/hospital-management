@@ -4,30 +4,23 @@
 <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Patients List</h2>
-        <a href="{% url 'register_patient' %}" class="btn btn-primary">
+        <a href="{% url 'registration:register_patient' %}" class="btn btn-primary">
             <i class="fas fa-user-plus me-1"></i> Register New Patient
         </a>
     </div>
 
     <div class="card shadow-sm">
-        <div class="card-header bg-light">
-            <div class="row text-center">
-                <div class="col-md-4">
-                    <h5 class="mb-0">Total Patients</h5>
-                    <span class="h3 text-primary">{{ total_patients }}</span>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="mb-0">New This Month</h5>
-                    <span class="h3 text-success">{{ new_patients_month|default:0 }}</span>
-                </div>
-                <div class="col-md-4">
-                    <h5 class="mb-0">Active Appointments</h5>
-                    <span class="h3 text-warning">{{ active_appointments|default:0 }}</span>
-                </div>
-            </div>
-        </div>
-
         <div class="card-body">
+            <!-- Search Form -->
+            <form method="get" class="mb-4">
+                <div class="input-group">
+                    <input type="text" name="search" class="form-control" placeholder="Search patients..." value="{{ search_query }}">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                </div>
+            </form>
+
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -52,17 +45,20 @@
                                     </div>
                                 {% endif %}
                             </td>
-                            <td>{{ patient.first_name }} {{ patient.last_name }}</td>
+                            <td>{{ patient.get_full_name }}</td>
                             <td>{{ patient.phone_number }}</td>
                             <td>{{ patient.email }}</td>
                             <td>{{ patient.registration_date|date:"F d, Y" }}</td>
                             <td>
                                 <div class="btn-group">
-                                    <a href="{% url 'patient_detail' patient.pk %}" class="btn btn-info btn-sm">
-                                        <i class="fas fa-eye me-1"></i> View Details
+                                    <a href="{% url 'registration:patient_detail' patient.pk %}" class="btn btn-info btn-sm text-white">
+                                        <i class="fas fa-eye me-1"></i> View
                                     </a>
-                                    <a href="{% url 'patient_edit' patient.pk %}" class="btn btn-warning btn-sm">
-                                        <i class="fas fa-edit me-1"></i> Edit Patient
+                                    <a href="{% url 'registration:patient_edit' patient.pk %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-edit me-1"></i> Edit
+                                    </a>
+                                    <a href="{% url 'registration:book_appointment' %}?patient={{ patient.pk }}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-calendar-plus me-1"></i> Book
                                     </a>
                                 </div>
                             </td>
@@ -83,7 +79,7 @@
         <ul class="pagination justify-content-center">
             {% if page_obj.has_previous %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
                         <i class="fas fa-chevron-left"></i> Previous
                     </a>
                 </li>
@@ -96,14 +92,14 @@
                     </li>
                 {% else %}
                     <li class="page-item">
-                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                        <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}">{{ num }}</a>
                     </li>
                 {% endif %}
             {% endfor %}
 
             {% if page_obj.has_next %}
                 <li class="page-item">
-                    <a class="page-link" href="?page={{ page_obj.next_page_number }}">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}">
                         Next <i class="fas fa-chevron-right"></i>
                     </a>
                 </li>
