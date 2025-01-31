@@ -4,11 +4,21 @@ A robust Django-based hospital management system that handles patient registrati
 
 ## Features
 
+- Dashboard
+  - Real-time Statistics Overview
+  - Quick Action Buttons
+  - Recent Activities Feed
+  - Today's Appointments Counter
+  - Active Appointments Tracker
+  - Available Doctors Status
+
 - Patient Management
   - Registration with Photo Upload
   - Medical History Tracking
   - Contact Information
   - Appointment History
+  - Search Functionality
+  - Pagination Support
 
 - Doctor Management
   - Specialization Categories
@@ -16,28 +26,41 @@ A robust Django-based hospital management system that handles patient registrati
   - Schedule Management
   - Profile Details
   - Patient Load Tracking
+  - Appointment Overview
 
 - Appointment System
   - Book Appointments
   - Track Status (Scheduled/Completed/Cancelled)
   - View History
   - Quick Actions
+  - Date and Time Selection
+  - Conflict Prevention
 
-- Modern Dashboard
-  - Real-time Statistics
-  - Quick Action Buttons
-  - Recent Activities Feed
+- Security Features
+  - Role-based Access Control
+  - Two-Factor Authentication
+  - Session Management
+  - Audit Logging
+  - Secure Password Handling
+
+- Modern UI/UX
+  - Responsive Design
+  - Bootstrap 5 Components
+  - Interactive Data Tables
   - Status Indicators
-  - Interactive UI Elements
+  - Clean Navigation
+  - Mobile-Friendly Interface
 
 ## Tech Stack
 
-- Django
+- Django 5.1
 - PostgreSQL
 - Bootstrap 5
 - SCSS/Sass
 - Font Awesome
 - JavaScript
+- Django OTP
+- Widget Tweaks
 
 ## Installation
 
@@ -80,10 +103,12 @@ python manage.py runserver
 ```
 ## Usage
 
-- Access admin interface: http://127.0.0.1:8000/admin/
+- Access dashboard: http://127.0.0.1:8000/
+- View patients list: http://127.0.0.1:8000/patients/
 - View doctors list: http://127.0.0.1:8000/doctors/
+- View appointments: http://127.0.0.1:8000/appointments/
+- Register patients: http://127.0.0.1:8000/register-patient/
 - Book appointments: http://127.0.0.1:8000/book-appointment/
-- Register patients: http://127.0.0.1:8000/register/
 
 ## Features Highlights
 
